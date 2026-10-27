@@ -10,6 +10,8 @@ use App\Models\Candidate;
 use App\Models\Group;
 use App\Models\User;
 use App\Services\GroupRoster;
+use App\Models\CandidatePhoto;
+use App\Support\CandidatePhotoApproval;
 use App\Support\CandidatePhotoUrls;
 use App\Support\CandidateProfileData;
 use App\Support\ManagedGroup;
@@ -85,9 +87,10 @@ class GroupCandidateController extends Controller
         $photosAllowed = ($member->gender === 'male' && $managed->male_pics_allowed)
             || ($member->gender === 'female' && $managed->female_pics_allowed);
 
+        $allPhotos = $member->photos()->with('approver:id,name')->get();
         $photos = $photosAllowed
-            ? $member->photos()->where('review_status', 'approved')->get()->map(
-                fn ($photo) => CandidatePhotoUrls::viewerCard($photo, (bool) $member->photos_blurred)
+            ? $allPhotos->where('review_status', 'approved')->map(
+                fn (CandidatePhoto $photo) => CandidatePhotoUrls::viewerCard($photo, (bool) $member->photos_blurred)
             )->values()->all()
             : [];
 
@@ -105,6 +108,9 @@ class GroupCandidateController extends Controller
             'photos_allowed' => $photosAllowed,
             'photos_message' => $this->photosMessage($member, $photosAllowed, $photos),
             'photos' => $photos,
+            'review_photos' => $allPhotos->map(
+                fn (CandidatePhoto $photo) => CandidatePhotoUrls::reviewCard($photo)
+            )->values()->all(),
         ]);
     }
 
@@ -118,6 +124,19 @@ class GroupCandidateController extends Controller
         return redirect()
             ->route('group_admin.groups.candidates.index', $managed)
             ->with('success', 'Candidate removed from the group.');
+    }
+
+    public function approvePhoto(Request $request, int $group, int $candidate, int $photo): RedirectResponse
+    {
+        $managed = ManagedGroup::find($request->user(), $group);
+        $member = ManagedGroup::candidate($managed, $candidate);
+        $record = $member->photos()->whereKey($photo)->first();
+
+        abort_if($record === null, 404);
+
+        $recorded = CandidatePhotoApproval::approve($record, $request->user());
+
+        return back()->with('success', $recorded ? 'Photo approved.' : 'This photo is already approved.');
     }
 
     public function approve(Request $request, int $group, int $candidate): RedirectResponse

@@ -96,7 +96,11 @@ function removeProfile() {
             <div v-else class="photo-grid">
                 <figure v-for="photo in photos" :key="photo.id" class="stack">
                     <img :src="photo.url" :alt="`${profile.display_name} photo`">
-                    <figcaption class="meta">{{ photo.year }} · {{ photo.review_label }}<span v-if="photo.is_main"> · Main</span></figcaption>
+                    <figcaption class="meta">
+                        {{ photo.year }} · {{ photo.review_label }}
+                        <span v-if="photo.is_main"> · Main</span>
+                        <span v-if="photo.approved_by"> · Approved by {{ photo.approved_by }}<span v-if="photo.approved_at"> on {{ photo.approved_at }}</span></span>
+                    </figcaption>
                     <Link v-if="photo.review_status !== 'approved'" :href="`/admin/candidates/${candidateId}/photos/${photo.id}/approve`" method="post" as="button" class="btn btn-primary">Approve photo</Link>
                 </figure>
             </div>

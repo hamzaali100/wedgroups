@@ -34,5 +34,6 @@ Route::middleware(['auth', 'group_admin'])->prefix('manage')->name('group_admin.
         Route::put('/groups/{group}/candidates/{candidate}/suspend', [GroupCandidateController::class, 'suspend'])->whereNumber(['group', 'candidate'])->name('groups.candidates.suspend');
         Route::put('/groups/{group}/candidates/{candidate}/reactivate', [GroupCandidateController::class, 'reactivate'])->whereNumber(['group', 'candidate'])->name('groups.candidates.reactivate');
         Route::put('/groups/{group}/candidates/{candidate}/notes', [GroupCandidateController::class, 'updateNotes'])->whereNumber(['group', 'candidate'])->name('groups.candidates.notes');
+        Route::post('/groups/{group}/candidates/{candidate}/photos/{photo}/approve', [GroupCandidateController::class, 'approvePhoto'])->whereNumber(['group', 'candidate', 'photo'])->name('groups.candidates.photos.approve');
     });
 });

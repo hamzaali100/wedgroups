@@ -10,6 +10,7 @@ const props = defineProps({
     photos_allowed: { type: Boolean, required: true },
     photos_message: { type: String, default: null },
     photos: { type: Array, required: true },
+    review_photos: { type: Array, required: true },
 })
 
 const page = usePage()
@@ -82,6 +83,32 @@ function remove() {
                 <figure v-for="photo in photos" :key="photo.id">
                     <img :src="photo.url" :alt="`${profile.display_name} photo, ${photo.year}`">
                     <figcaption class="meta">{{ photo.year }}<span v-if="photo.is_main"> · Main</span></figcaption>
+                </figure>
+            </div>
+        </section>
+
+        <section class="panel panel-wide section-gap">
+            <h2>Photo review</h2>
+            <p class="meta">An admin, or a group admin of a group this candidate belongs to, can approve a photo. The approval keeps the person's name and the time.</p>
+            <p v-if="!photos_allowed && review_photos.length" class="meta">This group hides these photos from members. You can still approve them.</p>
+            <p v-if="review_photos.length === 0" class="meta">This candidate has not added photos.</p>
+            <div v-else class="photo-grid">
+                <figure v-for="photo in review_photos" :key="photo.id" class="stack">
+                    <img :src="photo.url" :alt="`${profile.display_name} photo, ${photo.year}`">
+                    <figcaption class="meta">
+                        {{ photo.year }} · {{ photo.review_label }}
+                        <span v-if="photo.is_main"> · Main</span>
+                        <span v-if="photo.approved_by"> · Approved by {{ photo.approved_by }}<span v-if="photo.approved_at"> on {{ photo.approved_at }}</span></span>
+                    </figcaption>
+                    <Link
+                        v-if="photo.review_status !== 'approved'"
+                        :href="`/manage/groups/${group.id}/candidates/${profile.id}/photos/${photo.id}/approve`"
+                        method="post"
+                        as="button"
+                        class="btn btn-primary"
+                    >
+                        Approve photo
+                    </Link>
                 </figure>
             </div>
         </section>

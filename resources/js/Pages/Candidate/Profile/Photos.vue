@@ -204,6 +204,7 @@ function submitReplace(photo) {
                         {{ photo.year }} · {{ photo.review_label }}
                         <span v-if="photo.is_main"> · Main</span>
                         <span v-if="photo.blurred_url"> · Blurred copy saved</span>
+                        <span v-if="photo.approved_by"> · Approved by {{ photo.approved_by }}<span v-if="photo.approved_at"> on {{ photo.approved_at }}</span></span>
                     </p>
                     <div class="photo-actions">
                         <button class="btn btn-ghost" type="button" :disabled="index === 0" @click="move(index, -1)">Earlier</button>

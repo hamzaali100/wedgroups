@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['candidate_id', 'photo', 'blurred_photo', 'photo_year', 'is_main', 'sort_order', 'review_status'])]
+#[Fillable(['candidate_id', 'photo', 'blurred_photo', 'photo_year', 'is_main', 'sort_order', 'review_status', 'approved_by', 'approved_at'])]
 class CandidatePhoto extends Model
 {
     public const REVIEW_STATUSES = [
@@ -25,11 +25,17 @@ class CandidatePhoto extends Model
             'is_main' => 'boolean',
             'photo_year' => 'integer',
             'sort_order' => 'integer',
+            'approved_at' => 'datetime',
         ];
     }
 
     public function candidate(): BelongsTo
     {
         return $this->belongsTo(Candidate::class, 'candidate_id', 'user_id');
+    }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
     }
 }

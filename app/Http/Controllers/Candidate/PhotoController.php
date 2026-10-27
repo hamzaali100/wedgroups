@@ -62,7 +62,7 @@ class PhotoController extends Controller
             throw $exception;
         }
 
-        return back()->with('success', 'Photo uploaded. It stays hidden until an admin approves it.');
+        return back()->with('success', 'Photo uploaded. It stays hidden until an admin or a group admin approves it.');
     }
 
     public function update(ReplacePhotoRequest $request, CandidatePhotoProcessor $photos, int $photo): RedirectResponse
@@ -83,6 +83,8 @@ class PhotoController extends Controller
                 'blurred_photo' => $stored->blurredPhoto,
                 'photo_year' => $request->integer('photo_year'),
                 'review_status' => 'pending',
+                'approved_by' => null,
+                'approved_at' => null,
             ]);
         } catch (\Throwable $exception) {
             $photos->deletePaths($candidate->user_id, [$stored->photo, $stored->blurredPhoto]);
@@ -91,7 +93,7 @@ class PhotoController extends Controller
 
         $photos->deletePaths($candidate->user_id, $previous);
 
-        return back()->with('success', 'Photo replaced. It stays hidden until an admin approves it.');
+        return back()->with('success', 'Photo replaced. It stays hidden until an admin or a group admin approves it.');
     }
 
     public function destroy(Request $request, CandidatePhotoProcessor $photos, int $photo): RedirectResponse
@@ -186,7 +188,7 @@ class PhotoController extends Controller
      */
     private function page(Candidate $candidate): array
     {
-        $candidate->load('photos');
+        $candidate->load(['photos.approver:id,name']);
 
         return [
             'photos' => $candidate->photos->map(fn (CandidatePhoto $photo) => CandidatePhotoUrls::ownerCard($photo))->values(),

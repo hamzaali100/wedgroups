@@ -12,6 +12,7 @@ use App\Models\Country;
 use App\Models\Group;
 use App\Models\Religion;
 use App\Models\User;
+use App\Support\CandidatePhotoApproval;
 use App\Support\CandidatePhotoUrls;
 use App\Support\CandidateProfileData;
 use App\Support\CandidateProfileDeletion;
@@ -84,7 +85,7 @@ class CandidateProfileController extends Controller
 
     public function show(Candidate $candidate): Response
     {
-        $candidate->load([...self::RELATIONS, 'photos']);
+        $candidate->load([...self::RELATIONS, 'photos.approver:id,name']);
 
         return Inertia::render('Admin/Candidates/Show', [
             'candidateId' => $candidate->user_id,
@@ -223,13 +224,13 @@ class CandidateProfileController extends Controller
             ->with('success', 'Candidate profile deleted. The user account remains.');
     }
 
-    public function approvePhoto(Candidate $candidate, CandidatePhoto $photo): RedirectResponse
+    public function approvePhoto(Request $request, Candidate $candidate, CandidatePhoto $photo): RedirectResponse
     {
         abort_unless($photo->candidate_id === $candidate->user_id, 404);
 
-        $photo->update(['review_status' => 'approved']);
+        $recorded = CandidatePhotoApproval::approve($photo, $request->user());
 
-        return back()->with('success', 'Photo approved.');
+        return back()->with('success', $recorded ? 'Photo approved.' : 'This photo is already approved.');
     }
 
     public function addGroup(AddCandidateToGroupRequest $request, Candidate $candidate): RedirectResponse

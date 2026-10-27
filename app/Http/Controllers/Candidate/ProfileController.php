@@ -63,7 +63,7 @@ class ProfileController extends Controller
 
     public function show(Request $request): Response|RedirectResponse
     {
-        $candidate = $request->user()->candidate()->with([...self::RELATIONS, 'photos'])->first();
+        $candidate = $request->user()->candidate()->with([...self::RELATIONS, 'photos.approver:id,name'])->first();
 
         if ($candidate === null) {
             return redirect()->route('candidate.profile.create');

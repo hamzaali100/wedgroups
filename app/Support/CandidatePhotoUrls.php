@@ -17,8 +17,36 @@ class CandidatePhotoUrls
             'blurred_url' => $photo->blurred_photo ? self::forOwner($photo, 'blurred') : null,
             'year' => $photo->photo_year,
             'is_main' => $photo->is_main,
+            ...self::reviewFields($photo),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function reviewCard(CandidatePhoto $photo): array
+    {
+        return [
+            'id' => $photo->id,
+            'url' => self::forOwner($photo),
+            'year' => $photo->photo_year,
+            'is_main' => $photo->is_main,
+            ...self::reviewFields($photo),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function reviewFields(CandidatePhoto $photo): array
+    {
+        $photo->loadMissing('approver:id,name');
+
+        return [
             'review_status' => $photo->review_status,
             'review_label' => CandidatePhoto::REVIEW_STATUSES[$photo->review_status] ?? $photo->review_status,
+            'approved_by' => $photo->approver?->name,
+            'approved_at' => $photo->approved_at?->timezone(config('app.timezone'))->format('j M Y, H:i'),
         ];
     }
 

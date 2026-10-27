@@ -142,6 +142,11 @@ class AdminOperationsTest extends TestCase
             ->post('/admin/candidates/'.$subject->id.'/photos/'.$photoId.'/approve')
             ->assertRedirect();
 
+        $approved = DB::table('candidate_photos')->where('id', $photoId)->first();
+        $this->assertSame('approved', $approved->review_status);
+        $this->assertSame($admin->id, (int) $approved->approved_by);
+        $this->assertNotNull($approved->approved_at);
+
         $this->actingAs($groupAdmin)
             ->get('/manage/groups/'.$group->id.'/candidates/'.$subject->id)
             ->assertOk()

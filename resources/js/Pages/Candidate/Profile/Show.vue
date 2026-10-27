@@ -77,7 +77,11 @@ function saveVisibility() {
             <div v-else class="photo-grid">
                 <figure v-for="photo in photos" :key="photo.id">
                     <img :src="photo.url" :alt="`Photo from ${photo.year}`">
-                    <figcaption class="meta">{{ photo.year }}<span v-if="photo.is_main"> · Main</span></figcaption>
+                    <figcaption class="meta">
+                        {{ photo.year }} · {{ photo.review_label }}
+                        <span v-if="photo.is_main"> · Main</span>
+                        <span v-if="photo.approved_by"> · Approved by {{ photo.approved_by }}<span v-if="photo.approved_at"> on {{ photo.approved_at }}</span></span>
+                    </figcaption>
                 </figure>
             </div>
         </section>

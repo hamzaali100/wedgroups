@@ -43,8 +43,11 @@ class CandidatePhotoAccess
             return 'clear';
         }
 
-        $allowed = ($user->role === 'group_admin' && self::groupAdminCanView($user, $photo, $candidate))
-            || ($user->role === 'candidate' && self::candidateCanView($user, $photo, $candidate));
+        if ($user->role === 'group_admin' && self::managesCandidateGroup($user, $candidate)) {
+            return 'clear';
+        }
+
+        $allowed = $user->role === 'candidate' && self::candidateCanView($user, $photo, $candidate);
 
         if (! $allowed) {
             return null;
@@ -87,22 +90,19 @@ class CandidatePhotoAccess
         return $visible && self::sharedGroupAllowsPhotos($user->candidate, $candidate);
     }
 
-    private static function groupAdminCanView(User $user, CandidatePhoto $photo, Candidate $candidate): bool
+    /**
+     * A group admin may review photos of a candidate who belongs to one of their groups.
+     */
+    private static function managesCandidateGroup(User $user, Candidate $candidate): bool
     {
-        if ($photo->review_status !== 'approved' || $user->groupAdmin === null) {
+        if ($user->groupAdmin === null) {
             return false;
         }
 
-        $column = $candidate->gender === 'male' ? 'groups.male_pics_allowed' : 'groups.female_pics_allowed';
-
         return DB::table('group_group_admin')
-            ->join('groups', 'groups.id', '=', 'group_group_admin.group_id')
-            ->join('candidate_group', function ($join) use ($photo): void {
-                $join->on('candidate_group.group_id', '=', 'groups.id')
-                    ->where('candidate_group.candidate_id', $photo->candidate_id);
-            })
+            ->join('candidate_group', 'candidate_group.group_id', '=', 'group_group_admin.group_id')
             ->where('group_group_admin.user_id', $user->id)
-            ->where($column, true)
+            ->where('candidate_group.candidate_id', $candidate->user_id)
             ->exists();
     }
 }
