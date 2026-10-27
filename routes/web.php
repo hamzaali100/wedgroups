@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Candidate\PhotoFileController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,3 +30,8 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [LoginController::class, 'destroy'])
     ->middleware('auth')
     ->name('logout');
+
+Route::get('/photos/{photo}', [PhotoFileController::class, 'show'])
+    ->middleware(['auth', 'throttle:120,1'])
+    ->whereNumber('photo')
+    ->name('photos.show');

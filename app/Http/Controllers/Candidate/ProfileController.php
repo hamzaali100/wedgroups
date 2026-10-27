@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Candidate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Candidate\StoreCandidateProfileRequest;
 use App\Models\Candidate;
+use App\Models\CandidatePhoto;
 use App\Models\Country;
 use App\Models\Religion;
+use App\Support\CandidatePhotoUrls;
 use App\Support\CandidateProfileData;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,7 +63,7 @@ class ProfileController extends Controller
 
     public function show(Request $request): Response|RedirectResponse
     {
-        $candidate = $request->user()->candidate()->with(self::RELATIONS)->first();
+        $candidate = $request->user()->candidate()->with([...self::RELATIONS, 'photos'])->first();
 
         if ($candidate === null) {
             return redirect()->route('candidate.profile.create');
@@ -71,6 +73,8 @@ class ProfileController extends Controller
             'profile' => CandidateProfileData::owner($candidate),
             'profileStatuses' => Candidate::PROFILE_STATUSES,
             'profileVisibilities' => Candidate::PROFILE_VISIBILITIES,
+            'photos' => $candidate->photos->map(fn (CandidatePhoto $photo) => CandidatePhotoUrls::ownerCard($photo))->values(),
+            'photosBlurred' => $candidate->photos_blurred,
         ]);
     }
 

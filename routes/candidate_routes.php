@@ -13,6 +13,7 @@ use App\Http\Controllers\Candidate\LookupController;
 use App\Http\Controllers\Candidate\PartnerRequirementsController;
 use App\Http\Controllers\Candidate\PassedCandidateController;
 use App\Http\Controllers\Candidate\PersonalDetailsController;
+use App\Http\Controllers\Candidate\PhotoController;
 use App\Http\Controllers\Candidate\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +30,23 @@ Route::middleware(['auth', 'candidate'])->group(function () {
         Route::get('/profile', [ProfileController::class, 'show'])->name('candidate.profile.show');
         Route::put('/profile/status', [ProfileController::class, 'updateStatus'])->name('candidate.profile.status');
         Route::put('/profile/visibility', [ProfileController::class, 'updateVisibility'])->name('candidate.profile.visibility');
+
+        Route::get('/profile/photos', [PhotoController::class, 'index'])->name('candidate.photos.index');
+        Route::post('/profile/photos', [PhotoController::class, 'store'])
+            ->middleware('throttle:15,1')
+            ->name('candidate.photos.store');
+        Route::post('/profile/photos/order', [PhotoController::class, 'reorder'])->name('candidate.photos.reorder');
+        Route::put('/profile/photos/blur', [PhotoController::class, 'updateBlur'])->name('candidate.photos.blur');
+        Route::post('/profile/photos/{photo}/replace', [PhotoController::class, 'update'])
+            ->middleware('throttle:15,1')
+            ->whereNumber('photo')
+            ->name('candidate.photos.update');
+        Route::delete('/profile/photos/{photo}', [PhotoController::class, 'destroy'])
+            ->whereNumber('photo')
+            ->name('candidate.photos.destroy');
+        Route::post('/profile/photos/{photo}/main', [PhotoController::class, 'main'])
+            ->whereNumber('photo')
+            ->name('candidate.photos.main');
 
         Route::get('/profile/personal', [PersonalDetailsController::class, 'edit'])->name('candidate.profile.personal.edit');
         Route::put('/profile/personal', [PersonalDetailsController::class, 'update'])->name('candidate.profile.personal.update');

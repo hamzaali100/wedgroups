@@ -12,6 +12,7 @@ use App\Models\Country;
 use App\Models\Group;
 use App\Models\Religion;
 use App\Models\User;
+use App\Support\CandidatePhotoUrls;
 use App\Support\CandidateProfileData;
 use App\Support\CandidateProfileDeletion;
 use Illuminate\Http\RedirectResponse;
@@ -95,14 +96,7 @@ class CandidateProfileController extends Controller
                 'rejection_reason' => $candidate->rejection_reason,
             ],
             'profile' => CandidateProfileData::owner($candidate),
-            'photos' => $candidate->photos->map(fn (CandidatePhoto $photo) => [
-                'id' => $photo->id,
-                'url' => $this->photoUrl($photo->photo),
-                'year' => $photo->photo_year,
-                'is_main' => $photo->is_main,
-                'review_status' => $photo->review_status,
-                'review_label' => CandidatePhoto::REVIEW_STATUSES[$photo->review_status] ?? $photo->review_status,
-            ]),
+            'photos' => $candidate->photos->map(fn (CandidatePhoto $photo) => CandidatePhotoUrls::ownerCard($photo))->values(),
             'groups' => $candidate->groups->map(fn (Group $group) => [
                 'id' => $group->id,
                 'name' => $group->name,
@@ -279,14 +273,5 @@ class CandidateProfileController extends Controller
                 'group_id' => 'Only an active candidate account can be added to a group.',
             ]);
         }
-    }
-
-    private function photoUrl(string $path): string
-    {
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return $path;
-        }
-
-        return '/'.ltrim($path, '/');
     }
 }

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['candidate_id', 'photo', 'photo_year', 'is_main', 'sort_order', 'review_status'])]
+#[Fillable(['candidate_id', 'photo', 'blurred_photo', 'photo_year', 'is_main', 'sort_order', 'review_status'])]
 class CandidatePhoto extends Model
 {
     public const REVIEW_STATUSES = [
