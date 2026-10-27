@@ -32,10 +32,10 @@ class ProfileController extends Controller
         return Inertia::render('GroupAdmin/Profile/Edit', [
             'profile' => $this->payload(
                 $request,
-                $admin->name ?? $request->user()->name,
-                $admin->phone ?? '',
-                $admin->whatsapp ?? '',
-                $admin->description ?? '',
+                $admin?->name ?? $request->user()->name,
+                $admin?->phone ?? '',
+                $admin?->whatsapp ?? '',
+                $admin?->description ?? '',
             ),
         ]);
     }
