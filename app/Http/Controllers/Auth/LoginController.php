@@ -14,7 +14,9 @@ class LoginController extends Controller
 {
     public function create(): Response
     {
-        return Inertia::render('Auth/Login');
+        return Inertia::render('Auth/Login', [
+            'googleUrl' => route('auth.google.login'),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -32,10 +34,7 @@ class LoginController extends Controller
 
         $user = $request->user();
 
-        $canSignIn = $user->status === 'active'
-            && in_array($user->role, ['admin', 'candidate', 'group_admin'], true);
-
-        if (! $canSignIn) {
+        if (! $user->canSignIn()) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -47,19 +46,7 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        if ($user->role === 'admin') {
-            return redirect()->intended(route('admin.users.index'));
-        }
-
-        if ($user->role === 'group_admin') {
-            return redirect()->intended(route('group_admin.groups.index'));
-        }
-
-        return redirect()->intended(
-            $user->candidate
-                ? route('candidate.profile.show')
-                : route('candidate.profile.create')
-        );
+        return redirect()->intended($user->homeRoute());
     }
 
     public function destroy(Request $request): RedirectResponse

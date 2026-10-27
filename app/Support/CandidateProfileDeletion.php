@@ -3,7 +3,9 @@
 namespace App\Support;
 
 use App\Models\Candidate;
+use App\Services\CandidatePhotoProcessor;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class CandidateProfileDeletion
 {
@@ -11,7 +13,17 @@ class CandidateProfileDeletion
     {
         DB::transaction(function () use ($candidate): void {
             $id = $candidate->user_id;
+            $processor = app(CandidatePhotoProcessor::class);
 
+            foreach (DB::table('candidate_photos')->where('candidate_id', $id)->get(['photo', 'blurred_photo']) as $photo) {
+                try {
+                    $processor->deletePaths($id, [$photo->photo, $photo->blurred_photo]);
+                } catch (\Throwable) {
+                    // A missing file should not keep the profile.
+                }
+            }
+
+            Storage::disk('local')->deleteDirectory('candidate-photos/'.$id);
             DB::table('candidate_photos')->where('candidate_id', $id)->delete();
             DB::table('candidate_nationality')->where('candidate_id', $id)->delete();
             DB::table('candidate_group')->where('candidate_id', $id)->delete();

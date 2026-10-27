@@ -10,6 +10,7 @@ use App\Models\Candidate;
 use App\Models\Group;
 use App\Models\User;
 use App\Services\GroupRoster;
+use App\Support\CandidatePhotoUrls;
 use App\Support\CandidateProfileData;
 use App\Support\ManagedGroup;
 use Illuminate\Http\RedirectResponse;
@@ -85,12 +86,9 @@ class GroupCandidateController extends Controller
             || ($member->gender === 'female' && $managed->female_pics_allowed);
 
         $photos = $photosAllowed
-            ? $member->photos()->where('review_status', 'approved')->get()->map(fn ($photo) => [
-                'id' => $photo->id,
-                'url' => $this->photoUrl($photo->photo),
-                'year' => $photo->photo_year,
-                'is_main' => $photo->is_main,
-            ])->values()->all()
+            ? $member->photos()->where('review_status', 'approved')->get()->map(
+                fn ($photo) => CandidatePhotoUrls::viewerCard($photo, (bool) $member->photos_blurred)
+            )->values()->all()
             : [];
 
         return Inertia::render('GroupAdmin/Candidates/Show', [
@@ -175,15 +173,6 @@ class GroupCandidateController extends Controller
         $managed->candidates()->updateExistingPivot($candidate, $attributes);
 
         return back()->with('success', $success);
-    }
-
-    private function photoUrl(string $path): string
-    {
-        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
-            return $path;
-        }
-
-        return '/'.ltrim($path, '/');
     }
 
     /**

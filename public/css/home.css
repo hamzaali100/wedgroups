@@ -590,6 +590,47 @@ blockquote footer {
     color: #245c32;
 }
 
+.notice-error {
+    padding: 0.8rem 1rem;
+    border-radius: 0.75rem;
+    background: #fde8e4;
+    color: #8a2b22;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--ink-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgb(44 33 28 / 0.12);
+}
+
+.btn-google {
+    width: 100%;
+    gap: 0.6rem;
+    background: var(--white);
+    color: var(--ink);
+    border-color: rgb(44 33 28 / 0.18);
+}
+
+.btn-google:hover {
+    border-color: rgb(44 33 28 / 0.4);
+}
+
+.btn-google:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .detail-list {
     display: grid;
     gap: 0.85rem;

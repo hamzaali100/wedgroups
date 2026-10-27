@@ -41,22 +41,65 @@ class CreateProfileTest extends TestCase
         $this->actingAs($admin)->get('/profile/create')->assertForbidden();
     }
 
-    public function test_registration_always_creates_a_candidate_account(): void
+    public function test_registration_requires_a_chosen_role_and_rejects_any_other(): void
     {
-        $response = $this->post('/register', [
+        $this->get('/register')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Auth/Register')
+                ->where('roles.candidate', 'Candidate')
+                ->where('roles.group_admin', 'Group admin')
+                ->missing('roles.admin')
+                ->missing('roles.relative'));
+
+        $this->post('/register', [
+            'name' => 'Aisha Khan',
+            'email' => 'aisha@example.com',
+            'password' => 'Password1',
+            'password_confirmation' => 'Password1',
+            'status' => 'suspended',
+        ])->assertSessionHasErrors('role');
+
+        $this->post('/register', [
             'name' => 'Aisha Khan',
             'email' => 'aisha@example.com',
             'password' => 'Password1',
             'password_confirmation' => 'Password1',
             'role' => 'admin',
             'status' => 'suspended',
-        ]);
+        ])->assertSessionHasErrors('role');
 
-        $response->assertRedirect(route('candidate.profile.create'));
+        $this->assertDatabaseCount('users', 0);
+
+        $this->post('/register', [
+            'name' => 'Aisha Khan',
+            'email' => 'aisha@example.com',
+            'password' => 'Password1',
+            'password_confirmation' => 'Password1',
+            'role' => 'candidate',
+            'status' => 'suspended',
+        ])->assertRedirect(route('candidate.profile.create'));
 
         $this->assertDatabaseHas('users', [
             'email' => 'aisha@example.com',
             'role' => 'candidate',
+            'status' => 'active',
+        ]);
+    }
+
+    public function test_registration_can_create_a_group_admin_when_that_role_is_chosen(): void
+    {
+        $this->post('/register', [
+            'name' => 'Sana Ali',
+            'email' => 'sana@example.com',
+            'password' => 'Password1',
+            'password_confirmation' => 'Password1',
+            'role' => 'group_admin',
+        ])->assertRedirect(route('group_admin.groups.index'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'sana@example.com',
+            'role' => 'group_admin',
             'status' => 'active',
         ]);
     }

@@ -32,23 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo(function (Request $request) {
-            $user = $request->user();
-
-            if ($user?->role === 'admin') {
-                return route('admin.users.index');
-            }
-
-            if ($user?->role === 'group_admin') {
-                return route('group_admin.groups.index');
-            }
-
-            if ($user?->role === 'candidate') {
-                return $user->candidate
-                    ? route('candidate.profile.show')
-                    : route('candidate.profile.create');
-            }
-
-            return '/';
+            return $request->user()?->homeRoute() ?? '/';
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {

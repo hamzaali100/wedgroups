@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Candidate;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Candidate\FilterCandidatesRequest;
 use App\Models\Candidate;
+use App\Models\CandidatePhoto;
 use App\Models\Country;
 use App\Models\Religion;
 use App\Services\CandidateDirectory;
+use App\Support\CandidatePhotoAccess;
+use App\Support\CandidatePhotoUrls;
 use App\Support\CandidateProfileData;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -39,8 +42,19 @@ class DiscoveryController extends Controller
 
         abort_if($profile === null, 404);
 
+        $photos = null;
+
+        if (CandidatePhotoAccess::sharedGroupAllowsPhotos($viewer, $profile)) {
+            $photos = $profile->photos()
+                ->where('review_status', 'approved')
+                ->get()
+                ->map(fn (CandidatePhoto $photo) => CandidatePhotoUrls::viewerCard($photo, (bool) $profile->photos_blurred))
+                ->values();
+        }
+
         return Inertia::render('Candidate/Discovery/Show', [
             'profile' => CandidateProfileData::publicView($profile),
+            'photos' => $photos,
             'passed' => $directory->hasPassed($viewer, $profile),
             'liked' => $directory->hasLiked($viewer, $profile),
             'favorited' => $directory->hasFavorited($viewer, $profile),
