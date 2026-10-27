@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CandidatePhoto;
 use App\Support\StoredCandidatePhoto;
+use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -41,9 +42,12 @@ class CandidatePhotoProcessor
         'cgi', 'htaccess', 'asp', 'aspx', 'bat', 'cmd', 'com', 'scr', 'msi', 'jar', 'vbs', 'ps1',
     ];
 
-    public function store(UploadedFile $file, int $candidateId, bool $withBlur): StoredCandidatePhoto
+    /**
+     * @param  array{x: int, y: int, width: int, height: int}  $crop
+     */
+    public function store(UploadedFile $file, int $candidateId, bool $withBlur, array $crop): StoredCandidatePhoto
     {
-        $clearBytes = $this->sanitize($file);
+        $clearBytes = $this->sanitize($file, $crop);
         $name = (string) Str::uuid();
         $clearPath = 'candidate-photos/'.$candidateId.'/'.$name.'.jpg';
         $disk = Storage::disk('local');
@@ -106,7 +110,7 @@ class CandidatePhotoProcessor
         }
     }
 
-    public function inlineResponse(CandidatePhoto $photo, string $variant): \Illuminate\Http\Response
+    public function inlineResponse(CandidatePhoto $photo, string $variant): Response
     {
         $path = $variant === 'blurred' ? $photo->blurred_photo : $photo->photo;
         $bytes = is_string($path) ? $this->readOwned($photo->candidate_id, $path) : null;
@@ -138,7 +142,10 @@ class CandidatePhotoProcessor
         return $path;
     }
 
-    private function sanitize(UploadedFile $file): string
+    /**
+     * @param  array{x: int, y: int, width: int, height: int}  $crop
+     */
+    private function sanitize(UploadedFile $file, array $crop): string
     {
         $this->assertSafeName($file);
         $path = $file->getRealPath() ?: $file->getPathname();
@@ -149,6 +156,7 @@ class CandidatePhotoProcessor
         try {
             $image = $this->orient($image, $path);
             $this->assertDecodedBounds($image);
+            $image = $this->crop($image, $crop);
             $image = $this->flatten($image);
             $image = $this->fit($image, self::MAX_EDGE);
 
@@ -156,6 +164,49 @@ class CandidatePhotoProcessor
         } finally {
             $this->destroy($image);
         }
+    }
+
+    /**
+     * @param  array{x: int, y: int, width: int, height: int}  $crop
+     */
+    private function crop(\GdImage $image, array $crop): \GdImage
+    {
+        $imageWidth = imagesx($image);
+        $imageHeight = imagesy($image);
+        $x = $crop['x'];
+        $y = $crop['y'];
+        $width = $crop['width'];
+        $height = $crop['height'];
+
+        if ($x < 0 || $y < 0 || $width < self::MIN_EDGE || $height < self::MIN_EDGE) {
+            $this->fail('Crop the photo to an area at least '.self::MIN_EDGE.' pixels wide and tall.');
+        }
+
+        if ($x + $width > $imageWidth + 2 || $y + $height > $imageHeight + 2) {
+            $this->fail('The crop sits outside the photo. Adjust it and try again.');
+        }
+
+        $width = min($width, $imageWidth - $x);
+        $height = min($height, $imageHeight - $y);
+
+        if ($width < self::MIN_EDGE || $height < self::MIN_EDGE) {
+            $this->fail('Crop the photo to an area at least '.self::MIN_EDGE.' pixels wide and tall.');
+        }
+
+        $cropped = imagecrop($image, [
+            'x' => $x,
+            'y' => $y,
+            'width' => $width,
+            'height' => $height,
+        ]);
+
+        if (! $cropped instanceof \GdImage) {
+            $this->fail('The crop could not be saved. Adjust it and try again.');
+        }
+
+        $this->destroy($image);
+
+        return $cropped;
     }
 
     private function assertSafeName(UploadedFile $file): void

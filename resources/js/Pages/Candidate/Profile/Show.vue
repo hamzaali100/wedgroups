@@ -6,6 +6,8 @@ const props = defineProps({
     profile: { type: Object, required: true },
     profileStatuses: { type: Object, required: true },
     profileVisibilities: { type: Object, required: true },
+    photos: { type: Array, required: true },
+    photosBlurred: { type: Boolean, required: true },
 })
 
 const statusForm = useForm({
@@ -62,6 +64,21 @@ function saveVisibility() {
                     <p class="meta">Hidden profiles cannot be opened by other candidates, even in a shared group.</p>
                     <button class="btn btn-primary" type="submit" :disabled="visibilityForm.processing">Save visibility</button>
                 </form>
+            </div>
+        </section>
+
+        <section class="panel panel-wide section-gap">
+            <div class="section-head">
+                <h2>Photos</h2>
+                <Link href="/profile/photos" class="link-quiet">Manage</Link>
+            </div>
+            <p class="meta">{{ photosBlurred ? 'Other people see the blurred copies.' : 'Other people see the clear photos.' }} Crop a photo before it is saved.</p>
+            <p v-if="photos.length === 0" class="meta">No photos yet.</p>
+            <div v-else class="photo-grid">
+                <figure v-for="photo in photos" :key="photo.id">
+                    <img :src="photo.url" :alt="`Photo from ${photo.year}`">
+                    <figcaption class="meta">{{ photo.year }}<span v-if="photo.is_main"> · Main</span></figcaption>
+                </figure>
             </div>
         </section>
 

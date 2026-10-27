@@ -147,7 +147,7 @@ class AdminOperationsTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('photos', 1)
-                ->where('photos.0.url', '/photos/hira-private.jpg'));
+                ->where('photos.0.url', route('photos.show', ['photo' => $photoId, 'v' => 0], false)));
 
         $other = Group::query()->create([
             'name' => 'Bankers',

@@ -34,6 +34,7 @@ class PhotoController extends Controller
             $request->file('photo'),
             $candidate->user_id,
             $request->boolean('blur') || $candidate->photos_blurred,
+            $this->crop($request),
         );
 
         try {
@@ -73,6 +74,7 @@ class PhotoController extends Controller
             $request->file('photo'),
             $candidate->user_id,
             $request->boolean('blur') || $candidate->photos_blurred,
+            $this->crop($request),
         );
 
         try {
@@ -192,6 +194,19 @@ class PhotoController extends Controller
             'maxPhotos' => CandidatePhotoProcessor::MAX_PHOTOS,
             'minYear' => $candidate->year_of_birth,
             'maxYear' => (int) now()->year,
+        ];
+    }
+
+    /**
+     * @return array{x: int, y: int, width: int, height: int}
+     */
+    private function crop(StorePhotoRequest|ReplacePhotoRequest $request): array
+    {
+        return [
+            'x' => $request->integer('crop_x'),
+            'y' => $request->integer('crop_y'),
+            'width' => $request->integer('crop_width'),
+            'height' => $request->integer('crop_height'),
         ];
     }
 

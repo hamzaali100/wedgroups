@@ -172,7 +172,7 @@ class CandidateManagementTest extends TestCase
             'phone_number' => '03003333333',
         ]);
 
-        Candidate::query()->find($man->id)->photos()->create([
+        $manPhoto = Candidate::query()->find($man->id)->photos()->create([
             'photo' => 'photos/hira.jpg',
             'photo_year' => 2024,
             'is_main' => true,
@@ -197,7 +197,7 @@ class CandidateManagementTest extends TestCase
                 ->missing('profile.phone_number')
                 ->where('photos_allowed', true)
                 ->has('photos', 1)
-                ->where('photos.0.url', '/photos/hira.jpg'))
+                ->where('photos.0.url', route('photos.show', ['photo' => $manPhoto->id, 'v' => 0], false)))
             ->assertDontSee('Hira Secret')
             ->assertDontSee('03002222222');
 

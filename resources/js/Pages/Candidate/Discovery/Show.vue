@@ -7,6 +7,7 @@ defineProps({
     passed: { type: Boolean, required: true },
     liked: { type: Boolean, required: true },
     favorited: { type: Boolean, required: true },
+    photos: { type: Array, default: null },
 })
 </script>
 
@@ -73,6 +74,17 @@ defineProps({
                     Pass
                 </Link>
                 <Link href="/candidates" class="link-quiet">Back to browse</Link>
+            </div>
+        </section>
+
+        <section v-if="photos" class="panel panel-wide section-gap">
+            <h2>Photos</h2>
+            <p v-if="photos.length === 0" class="meta">No photos yet.</p>
+            <div v-else class="photo-grid">
+                <figure v-for="photo in photos" :key="photo.id">
+                    <img :src="photo.url" :alt="`${profile.display_name} photo, ${photo.year}`">
+                    <figcaption class="meta">{{ photo.year }}<span v-if="photo.is_main"> · Main</span></figcaption>
+                </figure>
             </div>
         </section>
 
