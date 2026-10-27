@@ -1,9 +1,34 @@
 <script setup>
-import { Head } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { Head, Link, usePage } from '@inertiajs/vue3'
+import { computed, ref } from 'vue'
+
+const page = usePage()
+const user = computed(() => page.props.auth?.user ?? null)
 
 const menuOpen = ref(false)
 const year = new Date().getFullYear()
+const accountHref = computed(() => {
+    if (user.value?.role === 'admin') {
+        return '/admin/users'
+    }
+
+    if (user.value?.role === 'group_admin') {
+        return '/manage/groups'
+    }
+
+    return '/profile'
+})
+const accountLabel = computed(() => {
+    if (user.value?.role === 'admin') {
+        return 'Admin'
+    }
+
+    if (user.value?.role === 'group_admin') {
+        return 'Your groups'
+    }
+
+    return 'Your profile'
+})
 
 function closeMenu() {
     menuOpen.value = false
@@ -33,8 +58,11 @@ function closeMenu() {
             </nav>
 
             <div class="header-actions">
-                <a href="#start" class="btn btn-ghost">Log in</a>
-                <a href="#start" class="btn btn-primary">Create a profile</a>
+                <Link v-if="user" :href="accountHref" class="btn btn-primary">{{ accountLabel }}</Link>
+                <template v-else>
+                    <Link href="/login" class="btn btn-ghost">Log in</Link>
+                    <Link href="/register" class="btn btn-primary">Create a profile</Link>
+                </template>
             </div>
 
             <button
@@ -56,7 +84,8 @@ function closeMenu() {
                 <a href="#privacy" @click="closeMenu">Privacy</a>
                 <a href="#how-it-works" @click="closeMenu">How it works</a>
                 <a href="#stories" @click="closeMenu">Stories</a>
-                <a href="#start" class="btn btn-primary" @click="closeMenu">Create a profile</a>
+                <Link v-if="user" :href="accountHref" class="btn btn-primary" @click="closeMenu">{{ accountLabel }}</Link>
+                <Link v-else href="/register" class="btn btn-primary" @click="closeMenu">Create a profile</Link>
             </div>
         </nav>
     </header>
@@ -70,7 +99,8 @@ function closeMenu() {
                     WedGroups is matchmaking without a public feed. You create a profile, then join closed groups — doctors only, bankers only, armed forces only — and appear only to members of those groups.
                 </p>
                 <div class="hero-actions">
-                    <a href="#start" class="btn btn-primary">Create your profile</a>
+                    <Link v-if="user" :href="accountHref" class="btn btn-primary">{{ accountLabel }}</Link>
+                    <Link v-else href="/register" class="btn btn-primary">Create your profile</Link>
                     <a href="#how-it-works" class="link-quiet">See how it works</a>
                 </div>
                 <dl class="stats">
@@ -195,7 +225,8 @@ function closeMenu() {
         <section id="start" class="cta">
             <h2 class="display">Start private. Stay private.</h2>
             <p>Create a profile, then join a circle that fits you — doctors, bankers, armed forces, and others like them. You are visible only where you belong.</p>
-            <a href="/" class="btn btn-primary">Create your profile</a>
+            <Link v-if="user" :href="accountHref" class="btn btn-primary">{{ accountLabel }}</Link>
+            <Link v-else href="/register" class="btn btn-primary">Create your profile</Link>
         </section>
     </main>
 

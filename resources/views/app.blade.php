@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="app-base" content="{{ url('/') }}">
     <title>{{ config('app.name', 'WedGroups') }}</title>
     <meta name="description" content="WedGroups is private matchmaking. Create a profile that is visible only in the groups you join, managed by group admins.">
     <link rel="preconnect" href="https://fonts.bunny.net">

@@ -1,8 +1,15 @@
 <?php
 
+use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\EnsureCandidate;
+use App\Http\Middleware\EnsureCandidateHasProfile;
+use App\Http\Middleware\EnsureGroupAdmin;
+use App\Http\Middleware\EnsureGroupAdminHasProfile;
+use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,8 +19,37 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
-            \App\Http\Middleware\HandleInertiaRequests::class,
+            HandleInertiaRequests::class,
         ]);
+
+        $middleware->alias([
+            'admin' => EnsureAdmin::class,
+            'candidate' => EnsureCandidate::class,
+            'candidate.profile' => EnsureCandidateHasProfile::class,
+            'group_admin' => EnsureGroupAdmin::class,
+            'group_admin.profile' => EnsureGroupAdminHasProfile::class,
+        ]);
+
+        $middleware->redirectGuestsTo('/login');
+        $middleware->redirectUsersTo(function (Request $request) {
+            $user = $request->user();
+
+            if ($user?->role === 'admin') {
+                return route('admin.users.index');
+            }
+
+            if ($user?->role === 'group_admin') {
+                return route('group_admin.groups.index');
+            }
+
+            if ($user?->role === 'candidate') {
+                return $user->candidate
+                    ? route('candidate.profile.show')
+                    : route('candidate.profile.create');
+            }
+
+            return '/';
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
